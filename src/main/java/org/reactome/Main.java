@@ -57,14 +57,15 @@ public class Main {
 
         this.ewasDbIdToReactions = fetchEWASDbIdToReactions(currentDba);
 
-        reportRLEs(currentDba,previousDba);
+        List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
+        reportRLEs(newReactionLikeEvents);
         System.out.println();
-        reportEWASs(currentDba, previousDba);
+        List<GKInstance> newEWASs = getNewEWASs(currentDba, previousDba);
+        reportEWASs(newEWASs);
     }
 
-    private void reportRLEs(MySQLAdaptor currentDba, MySQLAdaptor previousDba) throws Exception {
+    private void reportRLEs(List<GKInstance> newReactionLikeEvents) throws Exception {
         outputHeader();
-        List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
         for (GKInstance newReactionLikeEvent : newReactionLikeEvents) {
             if (isManuallyCurated(newReactionLikeEvent)) {
                 reportRLE(newReactionLikeEvent);
@@ -72,9 +73,8 @@ public class Main {
         }
     }
 
-    private void reportEWASs(MySQLAdaptor currentDba, MySQLAdaptor previousDba) throws Exception {
+    private void reportEWASs(List<GKInstance> newEWASs) throws Exception {
         outputHeader();
-        List<GKInstance> newEWASs = getNewEWASs(currentDba, previousDba);
         for (GKInstance newEWAS : newEWASs) {
             reportEWAS(newEWAS);
         }
