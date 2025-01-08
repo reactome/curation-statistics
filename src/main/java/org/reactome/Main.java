@@ -100,6 +100,7 @@ public class Main {
     private void outputHeader() {
         String header = String.join("\t",
             "DB_ID",
+            "Display Name",
             "Created date",
             "Created author",
             "Release date",
@@ -116,6 +117,7 @@ public class Main {
     private void reportRLE(GKInstance reactionLikeEvent) throws Exception {
         String line = String.join("\t",
             reactionLikeEvent.getDBID().toString(),
+            reactionLikeEvent.getDisplayName(),
             getCreatedDate(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             getCreatedAuthor(reactionLikeEvent),
             getReleaseDate(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
@@ -128,6 +130,7 @@ public class Main {
     private void reportEWAS(GKInstance ewas) throws Exception {
         String line = String.join("\t",
             ewas.getDBID().toString(),
+            ewas.getDisplayName(),
             getCreatedDate(ewas).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             getCreatedAuthor(ewas),
             getReleaseDateForEWAS(ewas) != null ?
