@@ -271,7 +271,7 @@ public class Main {
         );
         classToClassAttributesMapForObtainingProteins.put(
             ReactomeJavaConstants.CatalystActivity,
-            Arrays.asList(ReactomeJavaConstants.physicalEntity)
+            Arrays.asList(ReactomeJavaConstants.physicalEntity, ReactomeJavaConstants.activeUnit)
         );
         classToClassAttributesMapForObtainingProteins.put(
             ReactomeJavaConstants.Cell,
@@ -290,9 +290,22 @@ public class Main {
             Arrays.asList(ReactomeJavaConstants.hasMember)
         );
         classToClassAttributesMapForObtainingProteins.put(
+            ReactomeJavaConstants.CandidateSet,
+            Arrays.asList(ReactomeJavaConstants.hasCandidate)
+        );
+        classToClassAttributesMapForObtainingProteins.put(
             ReactomeJavaConstants.Polymer,
             Arrays.asList(ReactomeJavaConstants.repeatedUnit)
         );
+        classToClassAttributesMapForObtainingProteins.put(
+            ReactomeJavaConstants.EntityWithAccessionedSequence,
+            Arrays.asList(ReactomeJavaConstants.hasModifiedResidue)
+        );
+        classToClassAttributesMapForObtainingProteins.put(
+            ReactomeJavaConstants.GroupModifiedResidue,
+            Arrays.asList(ReactomeJavaConstants.modification)
+        );
+
 
         return classToClassAttributesMapForObtainingProteins;
     }
