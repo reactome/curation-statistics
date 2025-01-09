@@ -181,6 +181,9 @@ public class Main {
 
     private String getCreatedDateAsString(GKInstance instance) throws Exception {
         GKInstance createdInstance = (GKInstance) instance.getAttributeValue(ReactomeJavaConstants.created);
+        if (createdInstance == null) {
+            return "";
+        }
         return (String) createdInstance.getAttributeValue(ReactomeJavaConstants.dateTime);
     }
 
