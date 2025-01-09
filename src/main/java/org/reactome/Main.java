@@ -133,11 +133,16 @@ public class Main {
         String line = String.join("\t",
             reactionLikeEvent.getDBID().toString(),
             reactionLikeEvent.getDisplayName(),
-            getCreatedDate(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            getCreatedDate(reactionLikeEvent) != null ?
+                getCreatedDate(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) :
+                "N/A"
+            ,
             getCreatedAuthor(reactionLikeEvent),
-            getReleaseDate(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            getReleaseDateForRLE(reactionLikeEvent).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             getReleaseVersion(reactionLikeEvent).toString(),
-            getDaysBetweenCreationAndRelease(reactionLikeEvent).toString()
+            getDaysBetweenCreationAndReleaseForRLE(reactionLikeEvent) != null ?
+                getDaysBetweenCreationAndReleaseForRLE(reactionLikeEvent).toString() :
+                "N/A"
         );
         System.out.println(line);
     }
@@ -146,7 +151,10 @@ public class Main {
         String line = String.join("\t",
             ewas.getDBID().toString(),
             ewas.getDisplayName(),
-            getCreatedDate(ewas).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            getCreatedDate(ewas) != null ?
+                getCreatedDate(ewas).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) :
+                "N/A"
+            ,
             getCreatedAuthor(ewas),
             getReleaseDateForEWAS(ewas) != null ?
                 getReleaseDateForEWAS(ewas).format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) :
@@ -175,6 +183,10 @@ public class Main {
 
     private LocalDate getCreatedDate(GKInstance instance) throws Exception {
         String date = getCreatedDateAsString(instance);
+        if (date.isEmpty()) {
+            return null;
+        }
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
         return LocalDateTime.parse(date, formatter).toLocalDate();
     }
@@ -189,14 +201,18 @@ public class Main {
 
     private String getCreatedAuthor(GKInstance instance) throws Exception {
         GKInstance createdInstance = (GKInstance) instance.getAttributeValue(ReactomeJavaConstants.created);
+        if (createdInstance == null) {
+            return "Unknown Author";
+        }
+
         GKInstance authorInstance = (GKInstance) createdInstance.getAttributeValue(ReactomeJavaConstants.author);
         return authorInstance.getDisplayName();
     }
 
-    private LocalDate getReleaseDate(GKInstance instance) {
+    private LocalDate getReleaseDateForRLE(GKInstance reactionLikeEvent) {
         String date;
         try {
-            date = (String) instance.getAttributeValue(ReactomeJavaConstants.releaseDate);
+            date = (String) reactionLikeEvent.getAttributeValue(ReactomeJavaConstants.releaseDate);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -213,7 +229,7 @@ public class Main {
             return null;
         }
 
-        List<LocalDate> releaseDates = reactionLikeEvents.stream().map(this::getReleaseDate).collect(Collectors.toList());
+        List<LocalDate> releaseDates = reactionLikeEvents.stream().map(this::getReleaseDateForRLE).collect(Collectors.toList());
         if (!allDatesAreEqual(releaseDates)) {
             return Collections.min(releaseDates);
         }
@@ -326,18 +342,22 @@ public class Main {
         return ((MySQLAdaptor) instance.getDbAdaptor()).getReleaseNumber();
     }
 
-    private Long getDaysBetweenCreationAndRelease(GKInstance instance) throws Exception {
-        LocalDate releaseDate = getReleaseDate(instance);
+    private Long getDaysBetweenCreationAndReleaseForRLE(GKInstance instance) throws Exception {
         LocalDate creationDate = getCreatedDate(instance);
+        LocalDate releaseDate = getReleaseDateForRLE(instance);
+
+        if (creationDate == null || releaseDate == null) {
+            return null;
+        }
 
         return ChronoUnit.DAYS.between(creationDate, releaseDate);
     }
 
     private Long getDaysBetweenCreationAndReleaseForEWAS(GKInstance ewas) throws Exception {
-        LocalDate releaseDate = getReleaseDateForEWAS(ewas);
         LocalDate creationDate = getCreatedDate(ewas);
+        LocalDate releaseDate = getReleaseDateForEWAS(ewas);
 
-        if (releaseDate == null) {
+        if (creationDate == null || releaseDate == null) {
             return null;
         }
 
