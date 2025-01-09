@@ -67,6 +67,11 @@ public class Main {
         Path curatorRLEReportPath = Paths.get("CuratorRLECountV" + getCurrentDba().getReleaseNumber() + ".txt");
         Path curatorEWASReportPath = Paths.get("CuratorEWASCountV" + getCurrentDba().getReleaseNumber() + ".txt");
 
+        Files.deleteIfExists(rleReportPath);
+        Files.deleteIfExists(ewasReportPath);
+        Files.deleteIfExists(curatorRLEReportPath);
+        Files.deleteIfExists(curatorEWASReportPath);
+
         List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
         reportRLEs(newReactionLikeEvents, rleReportPath);
         reportCountPerCurator("RLE", newReactionLikeEvents, curatorRLEReportPath);
