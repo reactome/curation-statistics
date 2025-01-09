@@ -8,6 +8,11 @@ import org.gk.model.InstanceUtilities;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -57,41 +62,48 @@ public class Main {
 
         this.ewasDbIdToReactions = fetchEWASDbIdToReactions(currentDba);
 
+        Path rleReportPath = Paths.get("NewRLEsV" + getCurrentDba().getReleaseNumber() + ".txt");
+        Path ewasReportPath = Paths.get("NewEWASsV" + getCurrentDba().getReleaseNumber() + ".txt");
+        Path curatorRLEReportPath = Paths.get("CuratorRLECountV" + getCurrentDba().getReleaseNumber() + ".txt");
+        Path curatorEWASReportPath = Paths.get("CuratorEWASCountV" + getCurrentDba().getReleaseNumber() + ".txt");
+
         List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
-        reportRLEs(newReactionLikeEvents);
-        reportCountPerCurator("RLE", newReactionLikeEvents);
-        System.out.println();
+        reportRLEs(newReactionLikeEvents, rleReportPath);
+        reportCountPerCurator("RLE", newReactionLikeEvents, curatorRLEReportPath);
+
         List<GKInstance> newEWASs = getNewEWASs(currentDba, previousDba);
-        reportEWASs(newEWASs);
-        reportCountPerCurator("EWAS", newEWASs);
+        reportEWASs(newEWASs, ewasReportPath);
+        reportCountPerCurator("EWAS", newEWASs, curatorEWASReportPath);
     }
 
-    private void reportRLEs(List<GKInstance> newReactionLikeEvents) throws Exception {
-        outputInstanceReportHeader();
+    private void reportRLEs(List<GKInstance> newReactionLikeEvents, Path rleReportPath) throws Exception {
+        outputInstanceReportHeader(rleReportPath);
         for (GKInstance newReactionLikeEvent : newReactionLikeEvents) {
             if (isManuallyCurated(newReactionLikeEvent)) {
-                reportRLE(newReactionLikeEvent);
+                reportRLE(newReactionLikeEvent, rleReportPath);
             }
         }
     }
 
-    private void reportEWASs(List<GKInstance> newEWASs) throws Exception {
-        outputInstanceReportHeader();
+    private void reportEWASs(List<GKInstance> newEWASs, Path ewasReportPath) throws Exception {
+        outputInstanceReportHeader(ewasReportPath);
         for (GKInstance newEWAS : newEWASs) {
-            reportEWAS(newEWAS);
+            reportEWAS(newEWAS, ewasReportPath);
         }
     }
 
-    private void reportCountPerCurator(String reportType, List<GKInstance> instances) throws Exception {
+    private void reportCountPerCurator(String reportType, List<GKInstance> instances, Path reportFilePath)
+        throws Exception {
+
         Map<String, Integer> curatorToInstanceCount = new HashMap<>();
         for (GKInstance instance : instances) {
             String author = getCreatedAuthor(instance);
             curatorToInstanceCount.put(author, curatorToInstanceCount.computeIfAbsent(author, k -> 1) + 1);
         }
 
-        outputCuratorTallyHeader(reportType);
+        outputCuratorTallyHeader(reportType, reportFilePath);
         for (Map.Entry<String, Integer> curatorEntry : curatorToInstanceCount.entrySet()) {
-            reportCurator(curatorEntry);
+            reportCurator(curatorEntry, reportFilePath);
         }
     }
 
@@ -112,7 +124,7 @@ public class Main {
         return ewasDbIdToReactions;
     }
 
-    private void outputInstanceReportHeader() {
+    private void outputInstanceReportHeader(Path reportFilePath) throws IOException {
         String header = String.join("\t",
             "DB_ID",
             "Display Name",
@@ -121,15 +133,15 @@ public class Main {
             "Release date",
             "Release version",
             "Days between creation and release"
-        );
-        System.out.println(header);
+        ).concat(System.lineSeparator());
+        Files.write(reportFilePath, header.getBytes(), StandardOpenOption.CREATE);
     }
 
     private boolean isManuallyCurated(GKInstance reactionLikeEvent) throws Exception {
         return reactionLikeEvent.getAttributeValue(ReactomeJavaConstants.inferredFrom) == null;
     }
 
-    private void reportRLE(GKInstance reactionLikeEvent) throws Exception {
+    private void reportRLE(GKInstance reactionLikeEvent, Path rleReportPath) throws Exception {
         String line = String.join("\t",
             reactionLikeEvent.getDBID().toString(),
             reactionLikeEvent.getDisplayName(),
@@ -143,11 +155,11 @@ public class Main {
             getDaysBetweenCreationAndReleaseForRLE(reactionLikeEvent) != null ?
                 getDaysBetweenCreationAndReleaseForRLE(reactionLikeEvent).toString() :
                 "N/A"
-        );
-        System.out.println(line);
+        ).concat(System.lineSeparator());
+        Files.write(rleReportPath, line.getBytes(), StandardOpenOption.APPEND);
     }
 
-    private void reportEWAS(GKInstance ewas) throws Exception {
+    private void reportEWAS(GKInstance ewas, Path ewasReportPath) throws Exception {
         String line = String.join("\t",
             ewas.getDBID().toString(),
             ewas.getDisplayName(),
@@ -164,21 +176,21 @@ public class Main {
             getDaysBetweenCreationAndReleaseForEWAS(ewas) != null ?
                 getDaysBetweenCreationAndReleaseForEWAS(ewas).toString() :
                 "N/A"
-        );
-        System.out.println(line);
+        ).concat(System.lineSeparator());
+        Files.write(ewasReportPath, line.getBytes(), StandardOpenOption.APPEND);
     }
 
-    private void outputCuratorTallyHeader(String reportType) {
+    private void outputCuratorTallyHeader(String reportType, Path reportFilePath) throws IOException {
         String curatorTallyHeader = String.join("\t",
             "Curator Name",
             reportType + " Count"
-        );
-        System.out.println(curatorTallyHeader);
+        ).concat(System.lineSeparator());
+        Files.write(reportFilePath, curatorTallyHeader.getBytes(), StandardOpenOption.CREATE);
     }
 
-    private void reportCurator(Map.Entry<String, Integer> curatorEntry) {
-        String curatorEntryString = curatorEntry.getKey() + "\t" + curatorEntry.getValue();
-        System.out.println(curatorEntryString);
+    private void reportCurator(Map.Entry<String, Integer> curatorEntry, Path reportFilePath) throws IOException {
+        String curatorEntryString = curatorEntry.getKey() + "\t" + curatorEntry.getValue() + System.lineSeparator();
+        Files.write(reportFilePath, curatorEntryString.getBytes(), StandardOpenOption.APPEND);
     }
 
     private LocalDate getCreatedDate(GKInstance instance) throws Exception {
