@@ -215,7 +215,7 @@ public class Main {
 
         List<LocalDate> releaseDates = reactionLikeEvents.stream().map(this::getReleaseDate).collect(Collectors.toList());
         if (!allDatesAreEqual(releaseDates)) {
-            System.err.println(ewas + " has multiple release dates");
+            return Collections.min(releaseDates);
         }
         return releaseDates.get(0);
     }
