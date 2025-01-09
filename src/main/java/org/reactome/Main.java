@@ -59,13 +59,15 @@ public class Main {
 
         List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
         reportRLEs(newReactionLikeEvents);
+        reportCountPerCurator("RLE", newReactionLikeEvents);
         System.out.println();
         List<GKInstance> newEWASs = getNewEWASs(currentDba, previousDba);
         reportEWASs(newEWASs);
+        reportCountPerCurator("EWAS", newEWASs);
     }
 
     private void reportRLEs(List<GKInstance> newReactionLikeEvents) throws Exception {
-        outputHeader();
+        outputInstanceReportHeader();
         for (GKInstance newReactionLikeEvent : newReactionLikeEvents) {
             if (isManuallyCurated(newReactionLikeEvent)) {
                 reportRLE(newReactionLikeEvent);
@@ -74,9 +76,22 @@ public class Main {
     }
 
     private void reportEWASs(List<GKInstance> newEWASs) throws Exception {
-        outputHeader();
+        outputInstanceReportHeader();
         for (GKInstance newEWAS : newEWASs) {
             reportEWAS(newEWAS);
+        }
+    }
+
+    private void reportCountPerCurator(String reportType, List<GKInstance> instances) throws Exception {
+        Map<String, Integer> curatorToInstanceCount = new HashMap<>();
+        for (GKInstance instance : instances) {
+            String author = getCreatedAuthor(instance);
+            curatorToInstanceCount.put(author, curatorToInstanceCount.computeIfAbsent(author, k -> 1) + 1);
+        }
+
+        outputCuratorTallyHeader(reportType);
+        for (Map.Entry<String, Integer> curatorEntry : curatorToInstanceCount.entrySet()) {
+            reportCurator(curatorEntry);
         }
     }
 
@@ -97,7 +112,7 @@ public class Main {
         return ewasDbIdToReactions;
     }
 
-    private void outputHeader() {
+    private void outputInstanceReportHeader() {
         String header = String.join("\t",
             "DB_ID",
             "Display Name",
@@ -143,6 +158,19 @@ public class Main {
                 "N/A"
         );
         System.out.println(line);
+    }
+
+    private void outputCuratorTallyHeader(String reportType) {
+        String curatorTallyHeader = String.join("\t",
+            "Curator Name",
+            reportType + " Count"
+        );
+        System.out.println(curatorTallyHeader);
+    }
+
+    private void reportCurator(Map.Entry<String, Integer> curatorEntry) {
+        String curatorEntryString = curatorEntry.getKey() + "\t" + curatorEntry.getValue();
+        System.out.println(curatorEntryString);
     }
 
     private LocalDate getCreatedDate(GKInstance instance) throws Exception {
