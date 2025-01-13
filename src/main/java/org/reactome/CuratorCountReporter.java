@@ -16,7 +16,7 @@ import static org.reactome.Utils.getCreatedAuthor;
  * @author Joel Weiser (joel.weiser@oicr.on.ca)
  * Created 1/13/2025
  */
-public class CuratorCountReporter {
+public class CuratorCountReporter implements InstanceReporter {
     private String reportType;
     private Path outputFilePath;
 
@@ -25,6 +25,7 @@ public class CuratorCountReporter {
         this.outputFilePath = outputFilePath;
     }
 
+    @Override
     public void report(List<GKInstance> instances) throws Exception {
         Files.deleteIfExists(getOutputFilePath());
 

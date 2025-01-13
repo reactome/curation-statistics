@@ -17,13 +17,14 @@ import static org.reactome.Utils.*;
  * @author Joel Weiser (joel.weiser@oicr.on.ca)
  * Created 1/13/2025
  */
-public class RLEReporter {
+public class RLEReporter implements InstanceReporter {
     private Path outputFilePath;
 
     public RLEReporter(Path outputFilePath) {
         this.outputFilePath = outputFilePath;
     }
 
+    @Override
     public void report(List<GKInstance> newReactionLikeEvents) throws Exception {
         Files.deleteIfExists(getOutputFilePath());
 
