@@ -35,6 +35,9 @@ public class Main {
     @Parameter(names ={"--port", "--P"})
     private int port = 3306;
 
+    private MySQLAdaptor currentDba;
+    private MySQLAdaptor previousDba;
+
     public static void main(String[] args) throws Exception {
         Main main = new Main();
         JCommander.newBuilder()
@@ -46,43 +49,39 @@ public class Main {
     }
 
     public void run() throws Exception {
-        MySQLAdaptor currentDba = getCurrentDba();
-        MySQLAdaptor previousDba = getPreviousDba();
+        this.currentDba = createCurrentDba();
+        this.previousDba = createPreviousDba();
 
-        List<GKInstance> newReactionLikeEvents = getNewRLEs(currentDba, previousDba);
+        List<GKInstance> newReactionLikeEvents = getNewRLEs();
 
-        Path rleReportPath = Paths.get("NewRLEsV" + getCurrentDba().getReleaseNumber() + ".txt");
-        RLEReporter rleReporter = new RLEReporter(rleReportPath);
+        RLEReporter rleReporter = new RLEReporter(getRLEReportPath());
         rleReporter.report(newReactionLikeEvents);
 
-        Path curatorRLEReportPath = Paths.get("CuratorRLECountV" + getCurrentDba().getReleaseNumber() + ".txt");
-        CuratorCountReporter rleCuratorCount = new CuratorCountReporter("RLE", curatorRLEReportPath);
+        CuratorCountReporter rleCuratorCount = new CuratorCountReporter("RLE", getCurrentReleaseNumber());
         rleCuratorCount.report(newReactionLikeEvents);
 
-        List<GKInstance> newEWASs = getNewEWASs(currentDba, previousDba);
+        List<GKInstance> newEWASs = getNewEWASs();
 
-        Path ewasReportPath = Paths.get("NewEWASsV" + getCurrentDba().getReleaseNumber() + ".txt");
-        EWASReporter ewasReporter = new EWASReporter(ewasReportPath);
+        EWASReporter ewasReporter = new EWASReporter(getEWASReportPath());
         ewasReporter.report(newEWASs);
 
-        Path curatorEWASReportPath = Paths.get("CuratorEWASCountV" + getCurrentDba().getReleaseNumber() + ".txt");
-        CuratorCountReporter ewasCuratorCount = new CuratorCountReporter("EWAS", curatorEWASReportPath);
+        CuratorCountReporter ewasCuratorCount = new CuratorCountReporter("EWAS", getCurrentReleaseNumber());
         ewasCuratorCount.report(newEWASs);
     }
 
-    private List<GKInstance> getNewRLEs(MySQLAdaptor currentDba, MySQLAdaptor previousDba) throws Exception {
-        return getNewInstances(currentDba, previousDba, ReactomeJavaConstants.ReactionlikeEvent);
+    private List<GKInstance> getNewRLEs() throws Exception {
+        return getNewInstances(ReactomeJavaConstants.ReactionlikeEvent);
     }
 
-    private List<GKInstance> getNewEWASs(MySQLAdaptor currentDba, MySQLAdaptor previousDba) throws Exception {
-        return getNewInstances(currentDba, previousDba, ReactomeJavaConstants.EntityWithAccessionedSequence);
+    private List<GKInstance> getNewEWASs() throws Exception {
+        return getNewInstances(ReactomeJavaConstants.EntityWithAccessionedSequence);
     }
 
-    private List<GKInstance> getNewInstances(MySQLAdaptor currentDba, MySQLAdaptor previousDba, String className)
+    private List<GKInstance> getNewInstances(String className)
         throws Exception {
 
-        List<GKInstance> currentInstances = getInstances(currentDba, className);
-        List<Long> previousInstanceDbIds = getInstanceDbIds(previousDba, className);
+        List<GKInstance> currentInstances = getInstances(getCurrentDba(), className);
+        List<Long> previousInstanceDbIds = getInstanceDbIds(getPreviousDba(), className);
 
         List<GKInstance> newInstances = new ArrayList<>();
         for (GKInstance currentInstance : currentInstances) {
@@ -93,6 +92,14 @@ public class Main {
         return newInstances;
     }
 
+    private Path getRLEReportPath() throws Exception {
+        return Paths.get("NewRLEsV" + getCurrentDba().getReleaseNumber() + ".txt");
+    }
+
+    private Path getEWASReportPath() throws Exception {
+        return Paths.get("NewEWASsV" + getCurrentDba().getReleaseNumber() + ".txt");
+    }
+
     private List<Long> getInstanceDbIds(MySQLAdaptor dba, String className) throws Exception {
         return getInstances(dba, className).stream().map(GKInstance::getDBID).collect(Collectors.toList());
     }
@@ -101,15 +108,27 @@ public class Main {
         return new ArrayList<>(dba.fetchInstancesByClass(className));
     }
 
-    private MySQLAdaptor getCurrentDba() throws SQLException {
-        return getDba(this.currentDatabaseName);
+    private int getCurrentReleaseNumber() throws Exception {
+        return getCurrentDba().getReleaseNumber();
     }
 
-    private MySQLAdaptor getPreviousDba() throws SQLException {
-        return getDba(this.previousDatabaseName);
+    private MySQLAdaptor getCurrentDba() {
+        return this.currentDba;
     }
 
-    private MySQLAdaptor getDba(String dbName) throws SQLException {
+    private MySQLAdaptor getPreviousDba() {
+        return this.previousDba;
+    }
+
+    private MySQLAdaptor createCurrentDba() throws SQLException {
+        return createDba(this.currentDatabaseName);
+    }
+
+    private MySQLAdaptor createPreviousDba() throws SQLException {
+        return createDba(this.previousDatabaseName);
+    }
+
+    private MySQLAdaptor createDba(String dbName) throws SQLException {
         return new MySQLAdaptor(
             this.host,
             dbName,
