@@ -1,6 +1,8 @@
-package org.reactome;
+package org.reactome.reporters;
 
 import org.gk.model.GKInstance;
+import org.reactome.EWASReactionFetcher;
+import org.reactome.Utils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -5,6 +5,9 @@ import com.beust.jcommander.Parameter;
 import org.gk.model.GKInstance;
 import org.gk.model.ReactomeJavaConstants;
 import org.gk.persistence.MySQLAdaptor;
+import org.reactome.reporters.CuratorCountReporter;
+import org.reactome.reporters.EWASReporter;
+import org.reactome.reporters.RLEReporter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

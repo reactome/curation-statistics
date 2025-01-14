@@ -1,10 +1,11 @@
-package org.reactome;
+package org.reactome.reporters;
 
 import org.gk.model.GKInstance;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +21,9 @@ public class CuratorCountReporter implements InstanceReporter {
     private String reportType;
     private Path outputFilePath;
 
-    public CuratorCountReporter(String reportType, Path outputFilePath) {
+    public CuratorCountReporter(String reportType, int releaseNumber) {
         this.reportType = reportType;
-        this.outputFilePath = outputFilePath;
+        this.outputFilePath = Paths.get(String.format("Curator%sCountV%d.txt", reportType, releaseNumber));
     }
 
     @Override

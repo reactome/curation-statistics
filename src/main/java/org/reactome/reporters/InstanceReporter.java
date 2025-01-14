@@ -1,4 +1,4 @@
-package org.reactome;
+package org.reactome.reporters;
 
 import org.gk.model.GKInstance;
 
